@@ -26,3 +26,6 @@ captures/
 # OS files
 .DS_Store
 Thumbs.db
+
+release-key.jks
+keystore.properties
