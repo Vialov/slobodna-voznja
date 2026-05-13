@@ -48,6 +48,12 @@ data class DepartureResult(
     val relativeDay: RelativeDay
 )
 
+data class UpcomingDeparture(
+    val departure: DepartureTime,
+    val relativeDay: RelativeDay,
+    val waitMinutes: Int
+)
+
 enum class RelativeDay(val title: String) {
     Today("данас"),
     Tomorrow("сутра")
@@ -112,6 +118,65 @@ class ScheduleService(private val timetable: Timetable) {
             .sortedWith(compareBy<DepartureTime> { abs(it.serviceMinute - targetServiceMinute) }.thenBy { it.serviceMinute })
             .take(count)
             .sortedBy { it.serviceMinute }
+    }
+
+    fun nextDepartures(
+        dayOfWeek: Int,
+        direction: Direction,
+        targetMinuteOfDay: Int,
+        count: Int = 4
+    ): List<UpcomingDeparture> {
+        val targetServiceDay = if (targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60) {
+            previousDayOfWeek(dayOfWeek)
+        } else {
+            dayOfWeek
+        }
+        val targetServiceMinute = if (targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60) {
+            targetMinuteOfDay + MINUTES_PER_DAY
+        } else {
+            targetMinuteOfDay
+        }
+
+        val results = mutableListOf<UpcomingDeparture>()
+        var serviceDay = targetServiceDay
+        var dayOffset = 0
+        var minimumServiceMinute = targetServiceMinute
+
+        while (results.size < count && dayOffset <= 7) {
+            val departures = timetable.departures(dayType(serviceDay), direction)
+            departures
+                .filter { it.serviceMinute >= minimumServiceMinute }
+                .forEach { departure ->
+                    if (results.size < count) {
+                        val absoluteMinute = departure.serviceMinute + dayOffset * MINUTES_PER_DAY
+                        results += UpcomingDeparture(
+                            departure = departure,
+                            relativeDay = relativeDayFor(dayOffset, departure.serviceMinute, targetMinuteOfDay),
+                            waitMinutes = absoluteMinute - targetServiceMinute
+                        )
+                    }
+                }
+
+            dayOffset += 1
+            serviceDay = nextDayOfWeek(serviceDay)
+            minimumServiceMinute = 0
+        }
+
+        return results
+    }
+
+    private fun relativeDayFor(
+        dayOffset: Int,
+        serviceMinute: Int,
+        targetMinuteOfDay: Int
+    ): RelativeDay {
+        return if (dayOffset == 0 &&
+            (serviceMinute < MINUTES_PER_DAY || targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60)
+        ) {
+            RelativeDay.Today
+        } else {
+            RelativeDay.Tomorrow
+        }
     }
 
     private fun nextDayOfWeek(dayOfWeek: Int): Int {

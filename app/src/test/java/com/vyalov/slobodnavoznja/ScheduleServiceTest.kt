@@ -63,6 +63,39 @@ class ScheduleServiceTest {
         assertEquals(listOf("05:00", "06:00", "06:26", "07:00"), results.map { it.label })
     }
 
+    @Test
+    fun nextDeparturesReturnsFourUpcomingDeparturesChronologically() {
+        val results = service.nextDepartures(Calendar.MONDAY, Direction.Center, minutes("10:00"))
+
+        assertEquals(listOf("10:11", "10:26", "11:00", "23:30"), results.map { it.departure.label })
+        assertEquals(listOf(11, 26, 60, 810), results.map { it.waitMinutes })
+    }
+
+    @Test
+    fun nextDeparturesFindsLateNightDepartureAfterLastRegularBus() {
+        val results = service.nextDepartures(Calendar.MONDAY, Direction.Petrovaradin, minutes("23:50"))
+
+        assertEquals(listOf("00:31", "06:31", "10:09", "10:30"), results.map { it.departure.label })
+        assertEquals(listOf(41, 401, 619, 640), results.map { it.waitMinutes })
+        assertEquals(RelativeDay.Tomorrow, results.first().relativeDay)
+    }
+
+    @Test
+    fun nextDeparturesUsesPreviousServiceDayForAfterMidnightTarget() {
+        val results = service.nextDepartures(Calendar.TUESDAY, Direction.Petrovaradin, minutes("00:15"))
+
+        assertEquals(listOf("00:31", "06:31", "10:09", "10:30"), results.map { it.departure.label })
+        assertEquals(listOf(16, 376, 594, 615), results.map { it.waitMinutes })
+    }
+
+    @Test
+    fun nextDeparturesFillsFromNextServiceDayWhenNeeded() {
+        val results = service.nextDepartures(Calendar.SATURDAY, Direction.Center, minutes("23:40"))
+
+        assertEquals(listOf("05:00", "06:00", "06:26", "07:00"), results.map { it.departure.label })
+        assertEquals(listOf(320, 380, 406, 440), results.map { it.waitMinutes })
+    }
+
     private fun minutes(label: String): Int {
         val parts = label.split(":")
         return parts[0].toInt() * 60 + parts[1].toInt()
