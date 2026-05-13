@@ -12,7 +12,7 @@ Simple offline Android app for checking bus departures between Centar and Petrov
 
 ## Download
 
-Download the latest APK from the Releases section.
+Download the latest APK from the Releases section. [Releases](https://github.com/Vialov/slobodna-voznja/releases)
 
 ## Screenshots
 
