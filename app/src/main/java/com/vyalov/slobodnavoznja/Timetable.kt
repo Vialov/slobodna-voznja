@@ -54,6 +54,11 @@ data class UpcomingDeparture(
     val waitMinutes: Int
 )
 
+data class DepartureBrowseResult(
+    val departures: List<UpcomingDeparture>,
+    val nearestIndex: Int
+)
+
 enum class RelativeDay(val title: String) {
     Today("данас"),
     Tomorrow("сутра")
@@ -163,6 +168,69 @@ class ScheduleService(private val timetable: Timetable) {
         }
 
         return results
+    }
+
+    fun browseDepartures(
+        dayOfWeek: Int,
+        direction: Direction,
+        targetMinuteOfDay: Int
+    ): DepartureBrowseResult {
+        val targetServiceDay = if (targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60) {
+            previousDayOfWeek(dayOfWeek)
+        } else {
+            dayOfWeek
+        }
+        val targetServiceMinute = if (targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60) {
+            targetMinuteOfDay + MINUTES_PER_DAY
+        } else {
+            targetMinuteOfDay
+        }
+
+        val currentDayDepartures = timetable.departures(dayType(targetServiceDay), direction)
+        if (currentDayDepartures.isEmpty()) {
+            return DepartureBrowseResult(emptyList(), -1)
+        }
+
+        val currentDayIndex = currentDayDepartures.indexOfFirst { it.serviceMinute >= targetServiceMinute }
+        return DepartureBrowseResult(
+            departures = currentDayDepartures.map { departure ->
+                UpcomingDeparture(
+                    departure = departure,
+                    relativeDay = relativeDayFor(0, departure.serviceMinute, targetMinuteOfDay),
+                    waitMinutes = departure.serviceMinute - targetServiceMinute
+                )
+            },
+            nearestIndex = if (currentDayIndex >= 0) currentDayIndex else currentDayDepartures.lastIndex
+        )
+    }
+
+    fun browseDepartures(
+        dayType: ServiceDayType,
+        direction: Direction,
+        targetMinuteOfDay: Int
+    ): DepartureBrowseResult {
+        val targetServiceMinute = if (targetMinuteOfDay < LATE_NIGHT_CUTOFF_HOUR * 60) {
+            targetMinuteOfDay + MINUTES_PER_DAY
+        } else {
+            targetMinuteOfDay
+        }
+
+        val departures = timetable.departures(dayType, direction)
+        if (departures.isEmpty()) {
+            return DepartureBrowseResult(emptyList(), -1)
+        }
+
+        val nearestIndex = departures.indexOfFirst { it.serviceMinute >= targetServiceMinute }
+        return DepartureBrowseResult(
+            departures = departures.map { departure ->
+                UpcomingDeparture(
+                    departure = departure,
+                    relativeDay = relativeDayFor(0, departure.serviceMinute, targetMinuteOfDay),
+                    waitMinutes = departure.serviceMinute - targetServiceMinute
+                )
+            },
+            nearestIndex = if (nearestIndex >= 0) nearestIndex else departures.lastIndex
+        )
     }
 
     private fun relativeDayFor(

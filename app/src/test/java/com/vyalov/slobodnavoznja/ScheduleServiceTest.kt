@@ -96,6 +96,35 @@ class ScheduleServiceTest {
         assertEquals(listOf(320, 380, 406, 440), results.map { it.waitMinutes })
     }
 
+    @Test
+    fun browseDeparturesReturnsWholeServiceDayWithNearestIndex() {
+        val result = service.browseDepartures(Calendar.MONDAY, Direction.Center, minutes("10:00"))
+
+        assertEquals(
+            listOf("04:00", "09:36", "09:41", "10:11", "10:26", "11:00", "23:30"),
+            result.departures.map { it.departure.label }
+        )
+        assertEquals(3, result.nearestIndex)
+        assertEquals(listOf(-360, -24, -19, 11), result.departures.take(4).map { it.waitMinutes })
+    }
+
+    @Test
+    fun browseDeparturesSelectsLastSameDayDepartureAfterLastDeparture() {
+        val result = service.browseDepartures(Calendar.SATURDAY, Direction.Center, minutes("23:40"))
+
+        assertEquals(listOf("05:00", "06:00", "06:26", "07:00", "23:30"), result.departures.map { it.departure.label })
+        assertEquals(4, result.nearestIndex)
+        assertEquals(-10, result.departures.last().waitMinutes)
+    }
+
+    @Test
+    fun browseDeparturesCanUseExplicitServiceDayType() {
+        val result = service.browseDepartures(ServiceDayType.Weekend, Direction.Petrovaradin, minutes("10:00"))
+
+        assertEquals(listOf("06:31", "10:54", "23:40", "00:31"), result.departures.map { it.departure.label })
+        assertEquals(1, result.nearestIndex)
+    }
+
     private fun minutes(label: String): Int {
         val parts = label.split(":")
         return parts[0].toInt() * 60 + parts[1].toInt()
