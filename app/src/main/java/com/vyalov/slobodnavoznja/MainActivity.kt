@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(color(R.color.md_background))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(16), 0, dp(16), dp(24))
+                setPadding(screenHorizontalPadding(), 0, screenHorizontalPadding(), dp(if (isCompactLayout()) 20 else 24))
                 setBackgroundColor(color(R.color.md_background))
 
                 addView(appHeader())
@@ -55,13 +55,13 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(10)
+                    topMargin = dp(if (isCompactLayout()) 4 else 6)
                 })
                 addView(timeRow(), LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(10)
+                    topMargin = dp(if (isCompactLayout()) 8 else 10)
                 })
 
                 departuresList = LinearLayout(this@MainActivity).apply {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(16)
+                    topMargin = dp(if (isCompactLayout()) 12 else 16)
                 })
             }, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -81,9 +81,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun appHeader(): View {
+        val compact = isCompactLayout()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, statusBarHeight() + dp(8), 0, 0)
+            setPadding(0, statusBarHeight() + dp(if (compact) 4 else 6), 0, 0)
 
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -91,20 +92,20 @@ class MainActivity : AppCompatActivity() {
 
                 addView(TextView(this@MainActivity).apply {
                     text = getString(R.string.app_name)
-                    textSize = 24f
+                    textSize = if (compact) 22f else 24f
                     typeface = Typeface.DEFAULT_BOLD
                     setTextColor(color(R.color.md_text_primary))
                     includeFontPadding = false
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             }, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(44)
+                dp(if (compact) 34 else 40)
             ))
 
             addView(FrameLayout(this@MainActivity).apply {
                 addView(CityTransitIllustrationView(this@MainActivity), FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
-                    dp(114)
+                    dp(if (compact) 84 else 102)
                 ).apply {
                     gravity = Gravity.TOP
                 })
@@ -114,16 +115,17 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
                     gravity = Gravity.TOP
-                    topMargin = dp(80)
+                    topMargin = dp(if (compact) 54 else 68)
                 })
             }, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(150)
+                dp(if (compact) 110 else 134)
             ))
         }
     }
 
     private fun routeRow(): View {
+        val compact = isCompactLayout()
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -134,10 +136,10 @@ class MainActivity : AppCompatActivity() {
                 radius = dp(24)
             )
             elevation = dp(2).toFloat()
-            setPadding(dp(16), dp(8), dp(10), dp(8))
+            setPadding(dp(if (compact) 12 else 16), dp(if (compact) 6 else 8), dp(if (compact) 8 else 10), dp(if (compact) 6 else 8))
 
             routeButton = Button(this@MainActivity).apply {
-                textSize = 21f
+                textSize = if (compact) 18f else 21f
                 isAllCaps = false
                 typeface = Typeface.DEFAULT_BOLD
                 gravity = Gravity.CENTER_VERTICAL or Gravity.START
@@ -153,11 +155,11 @@ class MainActivity : AppCompatActivity() {
                     swapDirection()
                 }
             }
-            addView(routeButton, LinearLayout.LayoutParams(0, dp(48), 1f))
+            addView(routeButton, LinearLayout.LayoutParams(0, dp(if (compact) 44 else 48), 1f))
 
             addView(Button(this@MainActivity).apply {
                 text = "↔"
-                textSize = 22f
+                textSize = if (compact) 20f else 22f
                 isAllCaps = false
                 contentDescription = "Promeni smer"
                 minWidth = 0
@@ -166,13 +168,13 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(color(R.color.md_primary))
                 background = roundedBackground(
                     fillColor = color(R.color.md_primary_container),
-                    radius = dp(24)
+                    radius = dp(if (compact) 22 else 24)
                 )
                 setOnClickListener {
                     swapDirection()
                 }
-            }, LinearLayout.LayoutParams(dp(48), dp(48)).apply {
-                marginStart = dp(8)
+            }, LinearLayout.LayoutParams(dp(if (compact) 44 else 48), dp(if (compact) 44 else 48)).apply {
+                marginStart = dp(if (compact) 6 else 8)
             })
         }
     }
@@ -214,6 +216,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun timeChipRow(presets: List<TimePreset>): View {
+        val compact = isCompactLayout()
         return HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
@@ -233,9 +236,9 @@ class MainActivity : AppCompatActivity() {
                         },
                         LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
-                            dp(44)
+                            dp(if (compact) 40 else 44)
                         ).apply {
-                            if (index > 0) marginStart = dp(8)
+                            if (index > 0) marginStart = dp(if (compact) 2 else 4)
                         }
                     )
                 }
@@ -300,6 +303,7 @@ class MainActivity : AppCompatActivity() {
         nearestIndex: Int,
         totalDepartures: Int
     ): View {
+        val compact = isCompactLayout()
         return FrameLayout(this).apply {
             background = gradientBackground(
                 startColor = Color.parseColor("#5E45B8"),
@@ -307,20 +311,20 @@ class MainActivity : AppCompatActivity() {
                 radius = dp(24)
             )
             elevation = dp(2).toFloat()
-            minimumHeight = dp(184)
+            minimumHeight = dp(if (compact) 166 else 184)
 
             addView(HeroBusIllustrationView(this@MainActivity), FrameLayout.LayoutParams(
-                dp(156),
-                dp(118)
+                dp(if (compact) 126 else 156),
+                dp(if (compact) 100 else 118)
             ).apply {
                 gravity = Gravity.TOP or Gravity.END
-                topMargin = dp(16)
-                marginEnd = dp(10)
+                topMargin = dp(if (compact) 14 else 16)
+                marginEnd = dp(if (compact) 6 else 10)
             })
 
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(18), dp(16), dp(18), dp(16))
+                setPadding(dp(if (compact) 14 else 18), dp(if (compact) 14 else 16), dp(if (compact) 14 else 18), dp(if (compact) 14 else 16))
 
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation = LinearLayout.HORIZONTAL
@@ -331,14 +335,14 @@ class MainActivity : AppCompatActivity() {
 
                         addView(TextView(this@MainActivity).apply {
                             text = if (selectedIndex == nearestIndex) "Sledeći autobus" else "Izabrani polazak"
-                            textSize = 16f
+                            textSize = if (compact) 15f else 16f
                             typeface = Typeface.DEFAULT_BOLD
                             setTextColor(color(R.color.md_on_primary))
                         })
 
                         addView(TextView(this@MainActivity).apply {
                             text = item.departure.label
-                            textSize = 42f
+                            textSize = if (compact) 38f else 42f
                             typeface = Typeface.DEFAULT_BOLD
                             includeFontPadding = false
                             setTextColor(color(R.color.md_on_primary))
@@ -346,12 +350,12 @@ class MainActivity : AppCompatActivity() {
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply {
-                            topMargin = dp(7)
+                            topMargin = dp(if (compact) 5 else 7)
                         })
 
                         addView(TextView(this@MainActivity).apply {
                             text = formatWait(item.waitMinutes)
-                            textSize = 16f
+                            textSize = if (compact) 15f else 16f
                             typeface = Typeface.DEFAULT_BOLD
                             setTextColor(color(R.color.md_primary_container))
                         }, LinearLayout.LayoutParams(
@@ -362,7 +366,7 @@ class MainActivity : AppCompatActivity() {
                         })
                     }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-                    addView(View(this@MainActivity), LinearLayout.LayoutParams(dp(122), dp(1)))
+                    addView(View(this@MainActivity), LinearLayout.LayoutParams(dp(if (compact) 96 else 122), dp(1)))
                 }, LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -373,7 +377,7 @@ class MainActivity : AppCompatActivity() {
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
-                        topMargin = dp(10)
+                        topMargin = dp(if (compact) 8 else 10)
                     })
                 }
             }, FrameLayout.LayoutParams(
@@ -384,6 +388,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun departureNavigationControls(totalDepartures: Int): View {
+        val compact = isCompactLayout()
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -395,7 +400,7 @@ class MainActivity : AppCompatActivity() {
             ) {
                 selectedDepartureIndex -= 1
                 refresh()
-            }, LinearLayout.LayoutParams(0, dp(44), 1f))
+            }, LinearLayout.LayoutParams(0, dp(if (compact) 42 else 44), 1f))
 
             addView(navigationButton(
                 text = "Sledeći  →",
@@ -404,8 +409,8 @@ class MainActivity : AppCompatActivity() {
             ) {
                 selectedDepartureIndex += 1
                 refresh()
-            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
-                marginStart = dp(10)
+            }, LinearLayout.LayoutParams(0, dp(if (compact) 42 else 44), 1f).apply {
+                marginStart = dp(if (compact) 8 else 10)
             })
         }
     }
@@ -430,11 +435,11 @@ class MainActivity : AppCompatActivity() {
                 return@apply
             }
 
-            addView(MaxHeightScrollView(this@MainActivity, dp(250)).apply {
+            addView(MaxHeightScrollView(this@MainActivity, dp(if (isCompactLayout()) 230 else 250)).apply {
                 isNestedScrollingEnabled = true
                 val listContent = LinearLayout(this@MainActivity).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(8), 0, dp(8), 0)
+                    setPadding(dp(if (isCompactLayout()) 6 else 8), 0, dp(if (isCompactLayout()) 6 else 8), 0)
 
                     items.forEachIndexed { index, item ->
                         if (index > 0) {
@@ -468,6 +473,7 @@ class MainActivity : AppCompatActivity() {
         selected: Boolean,
         onClick: () -> Unit
     ): View {
+        val compact = isCompactLayout()
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -479,13 +485,13 @@ class MainActivity : AppCompatActivity() {
                 strokeWidth = if (selected) dp(1) else 0,
                 radius = dp(12)
             )
-            minimumHeight = dp(52)
-            setPadding(dp(12), dp(8), dp(10), dp(8))
+            minimumHeight = dp(if (compact) 48 else 52)
+            setPadding(dp(if (compact) 10 else 12), dp(if (compact) 7 else 8), dp(if (compact) 8 else 10), dp(if (compact) 7 else 8))
             setOnClickListener { onClick() }
 
             addView(TextView(this@MainActivity).apply {
                 text = item.departure.label
-                textSize = 21f
+                textSize = if (compact) 20f else 21f
                 typeface = Typeface.DEFAULT_BOLD
                 includeFontPadding = false
                 setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_primary))
@@ -493,7 +499,7 @@ class MainActivity : AppCompatActivity() {
 
             addView(TextView(this@MainActivity).apply {
                 text = formatWait(item.waitMinutes)
-                textSize = 16f
+                textSize = if (compact) 15f else 16f
                 gravity = Gravity.END
                 typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
                 setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
@@ -501,11 +507,11 @@ class MainActivity : AppCompatActivity() {
 
             addView(TextView(this@MainActivity).apply {
                 text = "›"
-                textSize = 28f
+                textSize = if (compact) 26f else 28f
                 gravity = Gravity.CENTER
                 includeFontPadding = false
                 setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
-            }, LinearLayout.LayoutParams(dp(24), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            }, LinearLayout.LayoutParams(dp(if (compact) 22 else 24), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 marginStart = dp(4)
             })
         }
@@ -517,17 +523,18 @@ class MainActivity : AppCompatActivity() {
         contentDescription: String,
         onClick: () -> Unit
     ): Button {
+        val compact = isCompactLayout()
         return Button(this).apply {
             this.text = text
             this.contentDescription = contentDescription
-            textSize = 14f
+            textSize = if (compact) 10.5f else 11.5f
             isAllCaps = false
             isEnabled = enabled
             alpha = if (enabled) 1f else 0.45f
             minWidth = 0
             minHeight = 0
             typeface = Typeface.DEFAULT_BOLD
-            setPadding(dp(8), 0, dp(8), 0)
+            setPadding(dp(if (compact) 6 else 8), 0, dp(if (compact) 6 else 8), 0)
             setTextColor(color(R.color.md_primary))
             background = roundedBackground(
                 fillColor = Color.parseColor("#F5EFFF"),
@@ -641,48 +648,53 @@ class MainActivity : AppCompatActivity() {
         if (!::timeChipsContainer.isInitialized) return
 
         timeChipsContainer.removeAllViews()
-        timePresetRows().forEach { presets ->
+        timePresetRows().forEachIndexed { index, presets ->
             timeChipsContainer.addView(timeChipRow(presets), LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ))
+            ).apply {
+                if (index > 0) topMargin = dp(if (isCompactLayout()) 6 else 8)
+            })
         }
     }
 
     private fun timePresetRows(): List<List<TimePreset>> {
-        return listOf(
-            listOf(
-                TimePreset("Sada", TimeMode.Now),
-                TimePreset("+1 h", TimeMode.Plus1h),
-                TimePreset("Prvi", TimeMode.First),
-                TimePreset("Jutro", TimeMode.Fixed(7, 0)),
-                TimePreset("Podne", TimeMode.Fixed(12, 0)),
-                TimePreset("Popodne", TimeMode.Fixed(16, 0)),
-                TimePreset("Veče", TimeMode.Fixed(18, 0)),
-                TimePreset("Kasno", TimeMode.Fixed(21, 0))
-            )
+        val firstRow = listOf(
+            TimePreset("Sada", TimeMode.Now),
+            TimePreset("+1 h", TimeMode.Plus1h),
+            TimePreset("Prvi", TimeMode.First),
+            TimePreset("Jutro", TimeMode.Fixed(7, 0))
         )
+        val secondRow = listOf(
+            TimePreset("Podne", TimeMode.Fixed(12, 0)),
+            TimePreset("Popodne", TimeMode.Fixed(16, 0)),
+            TimePreset("Veče", TimeMode.Fixed(18, 0)),
+            TimePreset("Kasno", TimeMode.Fixed(21, 0))
+        )
+
+        return listOf(firstRow, secondRow)
     }
 
     private fun timeChip(text: String, selected: Boolean, onClick: () -> Unit): Button {
+        val compact = isCompactLayout()
         return Button(this).apply {
             this.text = text
-            textSize = 14f
+            textSize = if (compact) 13f else 14f
             isAllCaps = false
             minWidth = 0
             minHeight = 0
             typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             elevation = if (selected) dp(1).toFloat() else 0f
-            setPadding(dp(17), 0, dp(17), 0)
+            setPadding(dp(if (compact) 5 else 8), 0, dp(if (compact) 5 else 8), 0)
             setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
             background = if (selected) {
-                roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(22))
+                roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(if (compact) 20 else 22))
             } else {
                 roundedBackground(
                     fillColor = Color.parseColor("#FFFCFF"),
                     strokeColor = Color.parseColor("#E9E0F7"),
                     strokeWidth = dp(1),
-                    radius = dp(22)
+                    radius = dp(if (compact) 20 else 22)
                 )
             }
             setOnClickListener { onClick() }
@@ -690,13 +702,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun choiceButton(text: String, onClick: () -> Unit): Button {
+        val compact = isCompactLayout()
         return Button(this).apply {
             this.text = text
-            textSize = 14f
+            textSize = if (compact) 13f else 14f
             isAllCaps = false
             minWidth = 0
             minHeight = 0
-            setPadding(dp(8), 0, dp(8), 0)
+            setPadding(dp(if (compact) 6 else 8), 0, dp(if (compact) 6 else 8), 0)
             setOnClickListener { onClick() }
         }
     }
@@ -708,11 +721,11 @@ class MainActivity : AppCompatActivity() {
         button.elevation = 0f
         button.setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
         button.background = if (selected) {
-            roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(17))
+            roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(if (isCompactLayout()) 16 else 17))
         } else {
             roundedBackground(
                 fillColor = Color.TRANSPARENT,
-                radius = dp(17)
+                radius = dp(if (isCompactLayout()) 16 else 17)
             )
         }
     }
@@ -755,7 +768,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun buttonHeight(): Int = dp(48)
+    private fun buttonHeight(): Int = dp(if (isCompactLayout()) 42 else 48)
 
     private fun color(resId: Int): Int {
         return getColor(resId)
@@ -763,6 +776,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
+    }
+
+    private fun screenHorizontalPadding(): Int {
+        return dp(if (isCompactLayout()) 12 else 16)
+    }
+
+    private fun isCompactLayout(): Boolean {
+        return resources.configuration.screenWidthDp < 390
     }
 
     private fun statusBarHeight(): Int {
