@@ -14,6 +14,9 @@ Simple offline Android app for checking bus departures between Centar and Petrov
 
 Download the latest APK from the Releases section.
 
+## Screenshots
+
+![Main screen](Screenshots/Screenshot_20260513_232708.png)
 
 ## Development
 
