@@ -1,7 +1,11 @@
 package com.vyalov.slobodnavoznja
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -43,21 +47,21 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(color(R.color.md_background))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(16), dp(16), dp(16), dp(24))
+                setPadding(dp(16), 0, dp(16), dp(24))
                 setBackgroundColor(color(R.color.md_background))
 
-                addView(routeRow())
+                addView(appHeader())
                 addView(dayRow(), LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(14)
+                    topMargin = dp(10)
                 })
                 addView(timeRow(), LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(14)
+                    topMargin = dp(10)
                 })
 
                 departuresList = LinearLayout(this@MainActivity).apply {
@@ -67,11 +71,54 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    topMargin = dp(20)
+                    topMargin = dp(16)
                 })
             }, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+    }
+
+    private fun appHeader(): View {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, statusBarHeight() + dp(8), 0, 0)
+
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+
+                addView(TextView(this@MainActivity).apply {
+                    text = getString(R.string.app_name)
+                    textSize = 24f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(color(R.color.md_text_primary))
+                    includeFontPadding = false
+                }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(44)
+            ))
+
+            addView(FrameLayout(this@MainActivity).apply {
+                addView(CityTransitIllustrationView(this@MainActivity), FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    dp(114)
+                ).apply {
+                    gravity = Gravity.TOP
+                })
+
+                addView(routeRow(), FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    gravity = Gravity.TOP
+                    topMargin = dp(80)
+                })
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(150)
             ))
         }
     }
@@ -84,15 +131,19 @@ class MainActivity : AppCompatActivity() {
                 fillColor = color(R.color.md_surface),
                 strokeColor = color(R.color.md_outline),
                 strokeWidth = dp(1),
-                radius = dp(20)
+                radius = dp(24)
             )
             elevation = dp(2).toFloat()
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(16), dp(8), dp(10), dp(8))
 
             routeButton = Button(this@MainActivity).apply {
-                textSize = 16f
+                textSize = 21f
                 isAllCaps = false
                 typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER_VERTICAL or Gravity.START
+                minWidth = 0
+                minHeight = 0
+                setPadding(0, 0, dp(8), 0)
                 setTextColor(color(R.color.md_text_primary))
                 background = roundedBackground(
                     fillColor = Color.TRANSPARENT,
@@ -102,21 +153,25 @@ class MainActivity : AppCompatActivity() {
                     swapDirection()
                 }
             }
-            addView(routeButton, LinearLayout.LayoutParams(0, buttonHeight(), 1f))
+            addView(routeButton, LinearLayout.LayoutParams(0, dp(48), 1f))
 
             addView(Button(this@MainActivity).apply {
                 text = "↔"
-                textSize = 18f
+                textSize = 22f
                 isAllCaps = false
+                contentDescription = "Promeni smer"
+                minWidth = 0
+                minHeight = 0
+                setPadding(0, 0, 0, 0)
                 setTextColor(color(R.color.md_primary))
                 background = roundedBackground(
                     fillColor = color(R.color.md_primary_container),
-                    radius = dp(14)
+                    radius = dp(24)
                 )
                 setOnClickListener {
                     swapDirection()
                 }
-            }, LinearLayout.LayoutParams(buttonHeight(), buttonHeight()).apply {
+            }, LinearLayout.LayoutParams(dp(48), dp(48)).apply {
                 marginStart = dp(8)
             })
         }
@@ -126,12 +181,12 @@ class MainActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             background = roundedBackground(
-                fillColor = color(R.color.md_surface_variant),
+                fillColor = Color.parseColor("#F7F2FF"),
                 strokeColor = color(R.color.md_outline),
                 strokeWidth = dp(1),
-                radius = dp(18)
+                radius = dp(20)
             )
-            setPadding(dp(4), dp(4), dp(4), dp(4))
+            setPadding(dp(3), dp(3), dp(3), dp(3))
 
             todayButton = choiceButton("Radni dan") {
                 selectedServiceDayType = ServiceDayType.Weekday
@@ -146,7 +201,7 @@ class MainActivity : AppCompatActivity() {
                 refresh()
             }
             addView(tomorrowButton, LinearLayout.LayoutParams(0, buttonHeight(), 1f).apply {
-                marginStart = dp(8)
+                marginStart = dp(4)
             })
         }
     }
@@ -162,6 +217,8 @@ class MainActivity : AppCompatActivity() {
         return HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
+            clipToPadding = false
+            setPadding(dp(1), 0, dp(1), 0)
 
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -176,7 +233,7 @@ class MainActivity : AppCompatActivity() {
                         },
                         LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
-                            dp(40)
+                            dp(44)
                         ).apply {
                             if (index > 0) marginStart = dp(8)
                         }
@@ -230,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                 totalDepartures = departures.size
             )
         )
-        departuresList.addView(sectionTitle(listTitle()), sectionLayoutParams(topMargin = dp(18)))
+        departuresList.addView(sectionTitle(listTitle()), sectionLayoutParams(topMargin = dp(14)))
         departuresList.addView(
             departureListCard(departures, selectedDepartureIndex),
             sectionLayoutParams(topMargin = dp(8))
@@ -243,52 +300,86 @@ class MainActivity : AppCompatActivity() {
         nearestIndex: Int,
         totalDepartures: Int
     ): View {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = roundedBackground(
-                fillColor = color(R.color.md_primary),
-                radius = dp(22)
+        return FrameLayout(this).apply {
+            background = gradientBackground(
+                startColor = Color.parseColor("#5E45B8"),
+                endColor = Color.parseColor("#9B72F2"),
+                radius = dp(24)
             )
             elevation = dp(2).toFloat()
-            setPadding(dp(22), dp(20), dp(22), dp(20))
+            minimumHeight = dp(184)
 
-            addView(TextView(this@MainActivity).apply {
-                text = if (selectedIndex == nearestIndex) "Sledeći autobus" else "Izabrani polazak"
-                textSize = 17f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color(R.color.md_on_primary))
+            addView(HeroBusIllustrationView(this@MainActivity), FrameLayout.LayoutParams(
+                dp(156),
+                dp(118)
+            ).apply {
+                gravity = Gravity.TOP or Gravity.END
+                topMargin = dp(16)
+                marginEnd = dp(10)
             })
 
             addView(LinearLayout(this@MainActivity).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.BOTTOM
-                setPadding(0, dp(12), 0, 0)
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(18), dp(16), dp(18), dp(16))
 
-                addView(TextView(this@MainActivity).apply {
-                    text = item.departure.label
-                    textSize = 44f
-                    typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(color(R.color.md_on_primary))
-                }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.BOTTOM
 
-                addView(TextView(this@MainActivity).apply {
-                    text = formatWait(item.waitMinutes)
-                    textSize = 18f
-                    typeface = Typeface.DEFAULT_BOLD
-                    gravity = Gravity.END
-                    setTextColor(color(R.color.md_primary_container))
-                    setPadding(dp(12), 0, 0, dp(7))
-                })
-            })
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation = LinearLayout.VERTICAL
 
-            if (totalDepartures > 1) {
-                addView(departureNavigationControls(totalDepartures), LinearLayout.LayoutParams(
+                        addView(TextView(this@MainActivity).apply {
+                            text = if (selectedIndex == nearestIndex) "Sledeći autobus" else "Izabrani polazak"
+                            textSize = 16f
+                            typeface = Typeface.DEFAULT_BOLD
+                            setTextColor(color(R.color.md_on_primary))
+                        })
+
+                        addView(TextView(this@MainActivity).apply {
+                            text = item.departure.label
+                            textSize = 42f
+                            typeface = Typeface.DEFAULT_BOLD
+                            includeFontPadding = false
+                            setTextColor(color(R.color.md_on_primary))
+                        }, LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            topMargin = dp(7)
+                        })
+
+                        addView(TextView(this@MainActivity).apply {
+                            text = formatWait(item.waitMinutes)
+                            textSize = 16f
+                            typeface = Typeface.DEFAULT_BOLD
+                            setTextColor(color(R.color.md_primary_container))
+                        }, LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            topMargin = dp(2)
+                        })
+                    }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+                    addView(View(this@MainActivity), LinearLayout.LayoutParams(dp(122), dp(1)))
+                }, LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = dp(14)
-                })
-            }
+                ))
+
+                if (totalDepartures > 1) {
+                    addView(departureNavigationControls(totalDepartures), LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = dp(10)
+                    })
+                }
+            }, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ))
         }
     }
 
@@ -297,15 +388,23 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
 
-            addView(navigationButton("Prethodni", enabled = selectedDepartureIndex > 0) {
+            addView(navigationButton(
+                text = "←  Prethodni",
+                enabled = selectedDepartureIndex > 0,
+                contentDescription = "Prethodni polazak"
+            ) {
                 selectedDepartureIndex -= 1
                 refresh()
-            }, LinearLayout.LayoutParams(0, buttonHeight(), 1f))
+            }, LinearLayout.LayoutParams(0, dp(44), 1f))
 
-            addView(navigationButton("Sledeći", enabled = selectedDepartureIndex < totalDepartures - 1) {
+            addView(navigationButton(
+                text = "Sledeći  →",
+                enabled = selectedDepartureIndex < totalDepartures - 1,
+                contentDescription = "Sledeći polazak"
+            ) {
                 selectedDepartureIndex += 1
                 refresh()
-            }, LinearLayout.LayoutParams(0, buttonHeight(), 1f).apply {
+            }, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
                 marginStart = dp(10)
             })
         }
@@ -324,7 +423,7 @@ class MainActivity : AppCompatActivity() {
                 radius = dp(18)
             )
             elevation = dp(1).toFloat()
-            setPadding(0, dp(6), 0, dp(6))
+            setPadding(0, dp(5), 0, dp(5))
 
             if (items.isEmpty()) {
                 addView(emptyDeparturesMessage())
@@ -333,9 +432,9 @@ class MainActivity : AppCompatActivity() {
 
             addView(MaxHeightScrollView(this@MainActivity, dp(250)).apply {
                 isNestedScrollingEnabled = true
-                addView(LinearLayout(this@MainActivity).apply {
+                val listContent = LinearLayout(this@MainActivity).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(10), 0, dp(10), 0)
+                    setPadding(dp(8), 0, dp(8), 0)
 
                     items.forEachIndexed { index, item ->
                         if (index > 0) {
@@ -346,12 +445,16 @@ class MainActivity : AppCompatActivity() {
                             refresh()
                         })
                     }
-                }, FrameLayout.LayoutParams(
+                }
+                addView(listContent, FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.WRAP_CONTENT
                 ))
                 post {
-                    scrollTo(0, (selectedIndex - 2).coerceAtLeast(0) * dp(50))
+                    val selectedRow = listContent.getChildAt(selectedIndex * 2) ?: return@post
+                    val centeredScrollY = selectedRow.top - (height - selectedRow.height) / 2
+                    val maxScrollY = (listContent.height - height).coerceAtLeast(0)
+                    scrollTo(0, centeredScrollY.coerceIn(0, maxScrollY))
                 }
             }, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -371,19 +474,21 @@ class MainActivity : AppCompatActivity() {
             isClickable = true
             isFocusable = true
             background = roundedBackground(
-                fillColor = if (selected) color(R.color.md_surface_variant) else Color.TRANSPARENT,
-                strokeColor = if (selected) color(R.color.md_primary_container) else null,
+                fillColor = if (selected) Color.parseColor("#F1EAFF") else Color.TRANSPARENT,
+                strokeColor = if (selected) Color.parseColor("#E4D9FA") else null,
                 strokeWidth = if (selected) dp(1) else 0,
                 radius = dp(12)
             )
-            setPadding(dp(10), dp(10), dp(10), dp(10))
+            minimumHeight = dp(52)
+            setPadding(dp(12), dp(8), dp(10), dp(8))
             setOnClickListener { onClick() }
 
             addView(TextView(this@MainActivity).apply {
                 text = item.departure.label
-                textSize = 22f
+                textSize = 21f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color(R.color.md_text_primary))
+                includeFontPadding = false
+                setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_primary))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
             addView(TextView(this@MainActivity).apply {
@@ -393,19 +498,39 @@ class MainActivity : AppCompatActivity() {
                 typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
                 setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+            addView(TextView(this@MainActivity).apply {
+                text = "›"
+                textSize = 28f
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
+            }, LinearLayout.LayoutParams(dp(24), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(4)
+            })
         }
     }
 
-    private fun navigationButton(text: String, enabled: Boolean, onClick: () -> Unit): Button {
+    private fun navigationButton(
+        text: String,
+        enabled: Boolean,
+        contentDescription: String,
+        onClick: () -> Unit
+    ): Button {
         return Button(this).apply {
             this.text = text
+            this.contentDescription = contentDescription
             textSize = 14f
             isAllCaps = false
             isEnabled = enabled
-            alpha = if (enabled) 1f else 0.5f
+            alpha = if (enabled) 1f else 0.45f
+            minWidth = 0
+            minHeight = 0
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(dp(8), 0, dp(8), 0)
             setTextColor(color(R.color.md_primary))
             background = roundedBackground(
-                fillColor = color(R.color.md_primary_container),
+                fillColor = Color.parseColor("#F5EFFF"),
                 radius = dp(14)
             )
             setOnClickListener {
@@ -414,6 +539,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun gradientBackground(
+        startColor: Int,
+        endColor: Int,
+        radius: Int
+    ) = GradientDrawable(
+        GradientDrawable.Orientation.TL_BR,
+        intArrayOf(startColor, endColor)
+    ).apply {
+        cornerRadius = radius.toFloat()
     }
 
     private fun emptyDeparturesMessage(): View {
@@ -505,13 +641,11 @@ class MainActivity : AppCompatActivity() {
         if (!::timeChipsContainer.isInitialized) return
 
         timeChipsContainer.removeAllViews()
-        timePresetRows().forEachIndexed { index, presets ->
+        timePresetRows().forEach { presets ->
             timeChipsContainer.addView(timeChipRow(presets), LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                if (index > 0) topMargin = dp(8)
-            })
+            ))
         }
     }
 
@@ -521,9 +655,7 @@ class MainActivity : AppCompatActivity() {
                 TimePreset("Sada", TimeMode.Now),
                 TimePreset("+1 h", TimeMode.Plus1h),
                 TimePreset("Prvi", TimeMode.First),
-                TimePreset("Jutro", TimeMode.Fixed(7, 0))
-            ),
-            listOf(
+                TimePreset("Jutro", TimeMode.Fixed(7, 0)),
                 TimePreset("Podne", TimeMode.Fixed(12, 0)),
                 TimePreset("Popodne", TimeMode.Fixed(16, 0)),
                 TimePreset("Veče", TimeMode.Fixed(18, 0)),
@@ -540,16 +672,17 @@ class MainActivity : AppCompatActivity() {
             minWidth = 0
             minHeight = 0
             typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-            setPadding(dp(16), 0, dp(16), 0)
+            elevation = if (selected) dp(1).toFloat() else 0f
+            setPadding(dp(17), 0, dp(17), 0)
             setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
             background = if (selected) {
-                roundedBackground(fillColor = color(R.color.md_primary), radius = dp(20))
+                roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(22))
             } else {
                 roundedBackground(
-                    fillColor = color(R.color.md_surface),
-                    strokeColor = color(R.color.md_outline),
+                    fillColor = Color.parseColor("#FFFCFF"),
+                    strokeColor = Color.parseColor("#E9E0F7"),
                     strokeWidth = dp(1),
-                    radius = dp(20)
+                    radius = dp(22)
                 )
             }
             setOnClickListener { onClick() }
@@ -572,15 +705,14 @@ class MainActivity : AppCompatActivity() {
         button.isSelected = selected
         button.typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         button.alpha = 1f
+        button.elevation = 0f
         button.setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
         button.background = if (selected) {
-            roundedBackground(fillColor = color(R.color.md_primary), radius = dp(14))
+            roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(17))
         } else {
             roundedBackground(
-                fillColor = color(R.color.md_surface),
-                strokeColor = color(R.color.md_outline),
-                strokeWidth = dp(1),
-                radius = dp(14)
+                fillColor = Color.TRANSPARENT,
+                radius = dp(17)
             )
         }
     }
@@ -633,6 +765,11 @@ class MainActivity : AppCompatActivity() {
         return (value * resources.displayMetrics.density).toInt()
     }
 
+    private fun statusBarHeight(): Int {
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
+    }
+
     private fun currentServiceDayType(): ServiceDayType {
         return when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
             Calendar.SATURDAY, Calendar.SUNDAY -> ServiceDayType.Weekend
@@ -659,6 +796,235 @@ class MainActivity : AppCompatActivity() {
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             val cappedHeightSpec = MeasureSpec.makeMeasureSpec(maxHeightPx, MeasureSpec.AT_MOST)
             super.onMeasure(widthMeasureSpec, cappedHeightSpec)
+        }
+    }
+
+    private class HeroBusIllustrationView(context: Context) : View(context) {
+        private val density = resources.displayMetrics.density
+        private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+        }
+        private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+
+            val w = width.toFloat()
+            val h = height.toFloat()
+            val roadY = h * 0.82f
+
+            fillPaint.color = Color.argb(22, 255, 255, 255)
+            canvas.drawCircle(w * 0.90f, h * 0.64f, dp(16).toFloat(), fillPaint)
+            canvas.drawRoundRect(
+                RectF(w * 0.87f, h * 0.66f, w * 0.93f, h * 0.90f),
+                dp(12).toFloat(),
+                dp(12).toFloat(),
+                fillPaint
+            )
+
+            strokePaint.color = Color.argb(62, 255, 255, 255)
+            strokePaint.strokeWidth = dp(2).toFloat()
+            canvas.drawLine(w * 0.12f, roadY, w * 0.96f, roadY, strokePaint)
+            canvas.drawLine(w * 0.42f, roadY + dp(9), w * 0.66f, roadY + dp(9), strokePaint)
+
+            drawBusStop(canvas, w * 0.88f, h * 0.21f)
+            drawBus(canvas, w * 0.23f, h * 0.24f, w * 0.48f, h * 0.57f)
+        }
+
+        private fun drawBus(canvas: Canvas, left: Float, top: Float, width: Float, height: Float) {
+            fillPaint.color = Color.argb(52, 255, 255, 255)
+            canvas.drawRoundRect(
+                RectF(left, top, left + width, top + height),
+                dp(12).toFloat(),
+                dp(12).toFloat(),
+                fillPaint
+            )
+
+            fillPaint.color = Color.argb(44, 94, 69, 184)
+            canvas.drawRoundRect(
+                RectF(left + dp(12), top + dp(9), left + width - dp(12), top + height * 0.48f),
+                dp(5).toFloat(),
+                dp(5).toFloat(),
+                fillPaint
+            )
+
+            fillPaint.color = Color.argb(80, 255, 255, 255)
+            canvas.drawRoundRect(
+                RectF(left + width * 0.34f, top + dp(5), left + width * 0.66f, top + dp(10)),
+                dp(4).toFloat(),
+                dp(4).toFloat(),
+                fillPaint
+            )
+
+            fillPaint.color = Color.argb(95, 255, 255, 255)
+            canvas.drawCircle(left + width * 0.20f, top + height - dp(7), dp(4).toFloat(), fillPaint)
+            canvas.drawCircle(left + width * 0.80f, top + height - dp(7), dp(4).toFloat(), fillPaint)
+
+            strokePaint.color = Color.argb(48, 255, 255, 255)
+            strokePaint.strokeWidth = dp(1).toFloat()
+            canvas.drawLine(left + dp(10), top + height * 0.66f, left + width - dp(10), top + height * 0.66f, strokePaint)
+        }
+
+        private fun drawBusStop(canvas: Canvas, cx: Float, top: Float) {
+            strokePaint.color = Color.argb(76, 255, 255, 255)
+            strokePaint.strokeWidth = dp(2).toFloat()
+            canvas.drawLine(cx, top + dp(26), cx, top + dp(68), strokePaint)
+
+            fillPaint.color = Color.argb(30, 255, 255, 255)
+            canvas.drawCircle(cx, top + dp(17), dp(14).toFloat(), fillPaint)
+
+            strokePaint.color = Color.argb(105, 255, 255, 255)
+            strokePaint.strokeWidth = dp(2).toFloat()
+            canvas.drawRoundRect(
+                RectF(cx - dp(7), top + dp(12), cx + dp(7), top + dp(21)),
+                dp(2).toFloat(),
+                dp(2).toFloat(),
+                strokePaint
+            )
+        }
+
+        private fun dp(value: Int): Int {
+            return (value * density).toInt()
+        }
+    }
+
+    private class CityTransitIllustrationView(context: Context) : View(context) {
+        private val density = resources.displayMetrics.density
+        private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+        }
+        private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+
+            val w = width.toFloat()
+            val h = height.toFloat()
+            val baseline = h * 0.78f
+
+            fillPaint.color = Color.parseColor("#F1ECFF")
+            val hills = Path().apply {
+                moveTo(0f, baseline)
+                cubicTo(w * 0.16f, h * 0.42f, w * 0.31f, h * 0.72f, w * 0.48f, h * 0.48f)
+                cubicTo(w * 0.65f, h * 0.26f, w * 0.76f, h * 0.70f, w, h * 0.48f)
+                lineTo(w, h)
+                lineTo(0f, h)
+                close()
+            }
+            canvas.drawPath(hills, fillPaint)
+
+            drawCloud(canvas, w * 0.70f, h * 0.20f, 1.0f)
+            drawCloud(canvas, w * 0.38f, h * 0.30f, 0.72f)
+
+            fillPaint.color = Color.parseColor("#D9CEF6")
+            drawBuilding(canvas, w * 0.72f, baseline - dp(60), dp(34), dp(60), topTower = true)
+            drawBuilding(canvas, w * 0.84f, baseline - dp(44), dp(58), dp(44), topTower = false)
+            drawBuilding(canvas, w * 0.08f, baseline - dp(50), dp(26), dp(50), topTower = true)
+
+            strokePaint.color = Color.parseColor("#B9A8E8")
+            strokePaint.strokeWidth = dp(3).toFloat()
+            val bridgeTop = baseline - dp(36)
+            val bridgeBottom = baseline - dp(4)
+            canvas.drawLine(w * 0.05f, bridgeBottom, w * 0.48f, bridgeBottom, strokePaint)
+            canvas.drawArc(RectF(w * 0.06f, bridgeTop, w * 0.25f, bridgeBottom + dp(24)), 190f, 150f, false, strokePaint)
+            canvas.drawArc(RectF(w * 0.22f, bridgeTop - dp(8), w * 0.43f, bridgeBottom + dp(22)), 200f, 140f, false, strokePaint)
+            repeat(6) { index ->
+                val x = w * 0.10f + index * w * 0.06f
+                canvas.drawLine(x, bridgeTop + dp(12), x, bridgeBottom, strokePaint)
+            }
+
+            fillPaint.color = Color.parseColor("#8064D7")
+            val busLeft = w * 0.52f
+            val busTop = baseline - dp(36)
+            val busRect = RectF(busLeft, busTop, busLeft + dp(96), busTop + dp(34))
+            canvas.drawRoundRect(busRect, dp(8).toFloat(), dp(8).toFloat(), fillPaint)
+
+            fillPaint.color = Color.parseColor("#EFE9FF")
+            repeat(4) { index ->
+                val left = busLeft + dp(10) + index * dp(19)
+                canvas.drawRoundRect(
+                    RectF(left, busTop + dp(7), left + dp(14), busTop + dp(18)),
+                    dp(2).toFloat(),
+                    dp(2).toFloat(),
+                    fillPaint
+                )
+            }
+
+            fillPaint.color = Color.parseColor("#4F378B")
+            canvas.drawCircle(busLeft + dp(20), busTop + dp(34), dp(5).toFloat(), fillPaint)
+            canvas.drawCircle(busLeft + dp(76), busTop + dp(34), dp(5).toFloat(), fillPaint)
+
+            strokePaint.color = Color.parseColor("#D3C7F2")
+            strokePaint.strokeWidth = dp(2).toFloat()
+            canvas.drawLine(0f, baseline + dp(3), w, baseline + dp(3), strokePaint)
+        }
+
+        private fun drawCloud(canvas: Canvas, cx: Float, cy: Float, scale: Float) {
+            fillPaint.color = Color.parseColor("#E3D9FA")
+            canvas.drawCircle(cx - dp((26 * scale).toInt()), cy + dp((8 * scale).toInt()), dp((14 * scale).toInt()).toFloat(), fillPaint)
+            canvas.drawCircle(cx, cy, dp((20 * scale).toInt()).toFloat(), fillPaint)
+            canvas.drawCircle(cx + dp((24 * scale).toInt()), cy + dp((8 * scale).toInt()), dp((15 * scale).toInt()).toFloat(), fillPaint)
+            canvas.drawRect(
+                cx - dp((38 * scale).toInt()),
+                cy + dp((8 * scale).toInt()),
+                cx + dp((42 * scale).toInt()),
+                cy + dp((20 * scale).toInt()),
+                fillPaint
+            )
+        }
+
+        private fun drawBuilding(
+            canvas: Canvas,
+            left: Float,
+            top: Float,
+            width: Int,
+            height: Int,
+            topTower: Boolean
+        ) {
+            canvas.drawRoundRect(
+                RectF(left, top, left + width, top + height),
+                dp(4).toFloat(),
+                dp(4).toFloat(),
+                fillPaint
+            )
+            if (topTower) {
+                val roof = Path().apply {
+                    moveTo(left + width / 2f, top - dp(18))
+                    lineTo(left + dp(5), top + dp(2))
+                    lineTo(left + width - dp(5), top + dp(2))
+                    close()
+                }
+                canvas.drawPath(roof, fillPaint)
+            }
+
+            val windowPaint = Paint(fillPaint).apply {
+                color = Color.parseColor("#F7F3FF")
+            }
+            val columns = (width / dp(16)).coerceAtLeast(1)
+            repeat(columns) { column ->
+                repeat(2) { row ->
+                    val x = left + dp(8) + column * dp(16)
+                    val y = top + dp(12) + row * dp(18)
+                    canvas.drawRoundRect(
+                        RectF(x, y, x + dp(6), y + dp(8)),
+                        dp(2).toFloat(),
+                        dp(2).toFloat(),
+                        windowPaint
+                    )
+                }
+            }
+        }
+
+        private fun dp(value: Int): Int {
+            return (value * density).toInt()
         }
     }
 }
