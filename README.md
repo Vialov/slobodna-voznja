@@ -16,7 +16,7 @@ Download the latest APK from the Releases section. [Releases](https://github.com
 
 ## Screenshots
 
-![Main screen](Screenshots/Screenshot_20260513_232708.png)
+<img src="https://raw.githubusercontent.com/Vialov/slobodna-voznja/refs/heads/main/Screenshots/Screenshot_20260513_232708.png" alt="Slobodna vožnja main screen" width="320">
 
 ## Development
 
