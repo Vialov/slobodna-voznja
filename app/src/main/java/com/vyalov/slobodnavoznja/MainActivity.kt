@@ -18,6 +18,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.toColorInt
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
@@ -84,7 +87,14 @@ class MainActivity : AppCompatActivity() {
         val compact = isCompactLayout()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, statusBarHeight() + dp(if (compact) 4 else 6), 0, 0)
+            val topContentPadding = dp(if (compact) 4 else 6)
+            setPadding(0, topContentPadding, 0, 0)
+            ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+                val statusBarTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                view.setPadding(0, statusBarTop + topContentPadding, 0, 0)
+                insets
+            }
+            ViewCompat.requestApplyInsets(this)
 
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -183,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             background = roundedBackground(
-                fillColor = Color.parseColor("#F7F2FF"),
+                fillColor = "#F7F2FF".toColorInt(),
                 strokeColor = color(R.color.md_outline),
                 strokeWidth = dp(1),
                 radius = dp(20)
@@ -306,8 +316,8 @@ class MainActivity : AppCompatActivity() {
         val compact = isCompactLayout()
         return FrameLayout(this).apply {
             background = gradientBackground(
-                startColor = Color.parseColor("#5E45B8"),
-                endColor = Color.parseColor("#9B72F2"),
+                startColor = "#5E45B8".toColorInt(),
+                endColor = "#9B72F2".toColorInt(),
                 radius = dp(24)
             )
             elevation = dp(2).toFloat()
@@ -482,8 +492,8 @@ class MainActivity : AppCompatActivity() {
             isClickable = true
             isFocusable = true
             background = roundedBackground(
-                fillColor = if (selected) Color.parseColor("#F1EAFF") else Color.TRANSPARENT,
-                strokeColor = if (selected) Color.parseColor("#E4D9FA") else null,
+                fillColor = if (selected) "#F1EAFF".toColorInt() else Color.TRANSPARENT,
+                strokeColor = if (selected) "#E4D9FA".toColorInt() else null,
                 strokeWidth = if (selected) dp(1) else 0,
                 radius = dp(12)
             )
@@ -541,7 +551,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(dp(if (compact) 6 else 8), 0, dp(if (compact) 6 else 8), 0)
             setTextColor(color(R.color.md_primary))
             background = roundedBackground(
-                fillColor = Color.parseColor("#F5EFFF"),
+                fillColor = "#F5EFFF".toColorInt(),
                 radius = dp(14)
             )
             setOnClickListener {
@@ -565,7 +575,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun emptyDeparturesMessage(): View {
         return TextView(this).apply {
-            text = "Nema polazaka"
+            text = getString(R.string.empty_departures)
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(color(R.color.md_text_secondary))
@@ -692,11 +702,11 @@ class MainActivity : AppCompatActivity() {
             setPadding(dp(if (compact) 5 else 8), 0, dp(if (compact) 5 else 8), 0)
             setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
             background = if (selected) {
-                roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(if (compact) 20 else 22))
+                roundedBackground(fillColor = "#6E55CC".toColorInt(), radius = dp(if (compact) 20 else 22))
             } else {
                 roundedBackground(
-                    fillColor = Color.parseColor("#FFFCFF"),
-                    strokeColor = Color.parseColor("#E9E0F7"),
+                    fillColor = "#FFFCFF".toColorInt(),
+                    strokeColor = "#E9E0F7".toColorInt(),
                     strokeWidth = dp(1),
                     radius = dp(if (compact) 20 else 22)
                 )
@@ -725,7 +735,7 @@ class MainActivity : AppCompatActivity() {
         button.elevation = 0f
         button.setTextColor(color(if (selected) R.color.md_on_primary else R.color.md_text_primary))
         button.background = if (selected) {
-            roundedBackground(fillColor = Color.parseColor("#6E55CC"), radius = dp(if (isCompactLayout()) 16 else 17))
+            roundedBackground(fillColor = "#6E55CC".toColorInt(), radius = dp(if (isCompactLayout()) 16 else 17))
         } else {
             roundedBackground(
                 fillColor = Color.TRANSPARENT,
@@ -794,11 +804,6 @@ class MainActivity : AppCompatActivity() {
         return resources.configuration.screenWidthDp < 390
     }
 
-    private fun statusBarHeight(): Int {
-        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
-    }
-
     private fun currentServiceDayType(): ServiceDayType {
         return when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
             Calendar.SATURDAY, Calendar.SUNDAY -> ServiceDayType.Weekend
@@ -838,6 +843,7 @@ class MainActivity : AppCompatActivity() {
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
+        private val rect = RectF()
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
@@ -848,8 +854,9 @@ class MainActivity : AppCompatActivity() {
 
             fillPaint.color = Color.argb(22, 255, 255, 255)
             canvas.drawCircle(w * 0.90f, h * 0.64f, dp(16).toFloat(), fillPaint)
+            rect.set(w * 0.87f, h * 0.66f, w * 0.93f, h * 0.90f)
             canvas.drawRoundRect(
-                RectF(w * 0.87f, h * 0.66f, w * 0.93f, h * 0.90f),
+                rect,
                 dp(12).toFloat(),
                 dp(12).toFloat(),
                 fillPaint
@@ -866,24 +873,27 @@ class MainActivity : AppCompatActivity() {
 
         private fun drawBus(canvas: Canvas, left: Float, top: Float, width: Float, height: Float) {
             fillPaint.color = Color.argb(52, 255, 255, 255)
+            rect.set(left, top, left + width, top + height)
             canvas.drawRoundRect(
-                RectF(left, top, left + width, top + height),
+                rect,
                 dp(12).toFloat(),
                 dp(12).toFloat(),
                 fillPaint
             )
 
             fillPaint.color = Color.argb(44, 94, 69, 184)
+            rect.set(left + dp(12), top + dp(9), left + width - dp(12), top + height * 0.48f)
             canvas.drawRoundRect(
-                RectF(left + dp(12), top + dp(9), left + width - dp(12), top + height * 0.48f),
+                rect,
                 dp(5).toFloat(),
                 dp(5).toFloat(),
                 fillPaint
             )
 
             fillPaint.color = Color.argb(80, 255, 255, 255)
+            rect.set(left + width * 0.34f, top + dp(5), left + width * 0.66f, top + dp(10))
             canvas.drawRoundRect(
-                RectF(left + width * 0.34f, top + dp(5), left + width * 0.66f, top + dp(10)),
+                rect,
                 dp(4).toFloat(),
                 dp(4).toFloat(),
                 fillPaint
@@ -908,8 +918,9 @@ class MainActivity : AppCompatActivity() {
 
             strokePaint.color = Color.argb(105, 255, 255, 255)
             strokePaint.strokeWidth = dp(2).toFloat()
+            rect.set(cx - dp(7), top + dp(12), cx + dp(7), top + dp(21))
             canvas.drawRoundRect(
-                RectF(cx - dp(7), top + dp(12), cx + dp(7), top + dp(21)),
+                rect,
                 dp(2).toFloat(),
                 dp(2).toFloat(),
                 strokePaint
@@ -931,6 +942,11 @@ class MainActivity : AppCompatActivity() {
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
+        private val windowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+        }
+        private val path = Path()
+        private val rect = RectF()
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
@@ -939,65 +955,67 @@ class MainActivity : AppCompatActivity() {
             val h = height.toFloat()
             val baseline = h * 0.78f
 
-            fillPaint.color = Color.parseColor("#F1ECFF")
-            val hills = Path().apply {
-                moveTo(0f, baseline)
-                cubicTo(w * 0.16f, h * 0.42f, w * 0.31f, h * 0.72f, w * 0.48f, h * 0.48f)
-                cubicTo(w * 0.65f, h * 0.26f, w * 0.76f, h * 0.70f, w, h * 0.48f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            canvas.drawPath(hills, fillPaint)
+            fillPaint.color = "#F1ECFF".toColorInt()
+            path.reset()
+            path.moveTo(0f, baseline)
+            path.cubicTo(w * 0.16f, h * 0.42f, w * 0.31f, h * 0.72f, w * 0.48f, h * 0.48f)
+            path.cubicTo(w * 0.65f, h * 0.26f, w * 0.76f, h * 0.70f, w, h * 0.48f)
+            path.lineTo(w, h)
+            path.lineTo(0f, h)
+            path.close()
+            canvas.drawPath(path, fillPaint)
 
             drawCloud(canvas, w * 0.70f, h * 0.20f, 1.0f)
             drawCloud(canvas, w * 0.38f, h * 0.30f, 0.72f)
 
-            fillPaint.color = Color.parseColor("#D9CEF6")
+            fillPaint.color = "#D9CEF6".toColorInt()
             drawBuilding(canvas, w * 0.72f, baseline - dp(60), dp(34), dp(60), topTower = true)
             drawBuilding(canvas, w * 0.84f, baseline - dp(44), dp(58), dp(44), topTower = false)
             drawBuilding(canvas, w * 0.08f, baseline - dp(50), dp(26), dp(50), topTower = true)
 
-            strokePaint.color = Color.parseColor("#B9A8E8")
+            strokePaint.color = "#B9A8E8".toColorInt()
             strokePaint.strokeWidth = dp(3).toFloat()
             val bridgeTop = baseline - dp(36)
             val bridgeBottom = baseline - dp(4)
             canvas.drawLine(w * 0.05f, bridgeBottom, w * 0.48f, bridgeBottom, strokePaint)
-            canvas.drawArc(RectF(w * 0.06f, bridgeTop, w * 0.25f, bridgeBottom + dp(24)), 190f, 150f, false, strokePaint)
-            canvas.drawArc(RectF(w * 0.22f, bridgeTop - dp(8), w * 0.43f, bridgeBottom + dp(22)), 200f, 140f, false, strokePaint)
+            rect.set(w * 0.06f, bridgeTop, w * 0.25f, bridgeBottom + dp(24))
+            canvas.drawArc(rect, 190f, 150f, false, strokePaint)
+            rect.set(w * 0.22f, bridgeTop - dp(8), w * 0.43f, bridgeBottom + dp(22))
+            canvas.drawArc(rect, 200f, 140f, false, strokePaint)
             repeat(6) { index ->
                 val x = w * 0.10f + index * w * 0.06f
                 canvas.drawLine(x, bridgeTop + dp(12), x, bridgeBottom, strokePaint)
             }
 
-            fillPaint.color = Color.parseColor("#8064D7")
+            fillPaint.color = "#8064D7".toColorInt()
             val busLeft = w * 0.52f
             val busTop = baseline - dp(36)
-            val busRect = RectF(busLeft, busTop, busLeft + dp(96), busTop + dp(34))
-            canvas.drawRoundRect(busRect, dp(8).toFloat(), dp(8).toFloat(), fillPaint)
+            rect.set(busLeft, busTop, busLeft + dp(96), busTop + dp(34))
+            canvas.drawRoundRect(rect, dp(8).toFloat(), dp(8).toFloat(), fillPaint)
 
-            fillPaint.color = Color.parseColor("#EFE9FF")
+            fillPaint.color = "#EFE9FF".toColorInt()
             repeat(4) { index ->
                 val left = busLeft + dp(10) + index * dp(19)
+                rect.set(left, busTop + dp(7), left + dp(14), busTop + dp(18))
                 canvas.drawRoundRect(
-                    RectF(left, busTop + dp(7), left + dp(14), busTop + dp(18)),
+                    rect,
                     dp(2).toFloat(),
                     dp(2).toFloat(),
                     fillPaint
                 )
             }
 
-            fillPaint.color = Color.parseColor("#4F378B")
+            fillPaint.color = "#4F378B".toColorInt()
             canvas.drawCircle(busLeft + dp(20), busTop + dp(34), dp(5).toFloat(), fillPaint)
             canvas.drawCircle(busLeft + dp(76), busTop + dp(34), dp(5).toFloat(), fillPaint)
 
-            strokePaint.color = Color.parseColor("#D3C7F2")
+            strokePaint.color = "#D3C7F2".toColorInt()
             strokePaint.strokeWidth = dp(2).toFloat()
             canvas.drawLine(0f, baseline + dp(3), w, baseline + dp(3), strokePaint)
         }
 
         private fun drawCloud(canvas: Canvas, cx: Float, cy: Float, scale: Float) {
-            fillPaint.color = Color.parseColor("#E3D9FA")
+            fillPaint.color = "#E3D9FA".toColorInt()
             canvas.drawCircle(cx - dp((26 * scale).toInt()), cy + dp((8 * scale).toInt()), dp((14 * scale).toInt()).toFloat(), fillPaint)
             canvas.drawCircle(cx, cy, dp((20 * scale).toInt()).toFloat(), fillPaint)
             canvas.drawCircle(cx + dp((24 * scale).toInt()), cy + dp((8 * scale).toInt()), dp((15 * scale).toInt()).toFloat(), fillPaint)
@@ -1018,32 +1036,31 @@ class MainActivity : AppCompatActivity() {
             height: Int,
             topTower: Boolean
         ) {
+            rect.set(left, top, left + width, top + height)
             canvas.drawRoundRect(
-                RectF(left, top, left + width, top + height),
+                rect,
                 dp(4).toFloat(),
                 dp(4).toFloat(),
                 fillPaint
             )
             if (topTower) {
-                val roof = Path().apply {
-                    moveTo(left + width / 2f, top - dp(18))
-                    lineTo(left + dp(5), top + dp(2))
-                    lineTo(left + width - dp(5), top + dp(2))
-                    close()
-                }
-                canvas.drawPath(roof, fillPaint)
+                path.reset()
+                path.moveTo(left + width / 2f, top - dp(18))
+                path.lineTo(left + dp(5), top + dp(2))
+                path.lineTo(left + width - dp(5), top + dp(2))
+                path.close()
+                canvas.drawPath(path, fillPaint)
             }
 
-            val windowPaint = Paint(fillPaint).apply {
-                color = Color.parseColor("#F7F3FF")
-            }
+            windowPaint.color = "#F7F3FF".toColorInt()
             val columns = (width / dp(16)).coerceAtLeast(1)
             repeat(columns) { column ->
                 repeat(2) { row ->
                     val x = left + dp(8) + column * dp(16)
                     val y = top + dp(12) + row * dp(18)
+                    rect.set(x, y, x + dp(6), y + dp(8))
                     canvas.drawRoundRect(
-                        RectF(x, y, x + dp(6), y + dp(8)),
+                        rect,
                         dp(2).toFloat(),
                         dp(2).toFloat(),
                         windowPaint

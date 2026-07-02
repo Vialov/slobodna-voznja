@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Slobodna vožnja</string>
+    <string name="empty_departures">Nema polazaka</string>
 </resources>
