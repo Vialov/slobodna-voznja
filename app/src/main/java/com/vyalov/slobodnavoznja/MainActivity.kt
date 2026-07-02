@@ -353,17 +353,19 @@ class MainActivity : AppCompatActivity() {
                             topMargin = dp(if (compact) 5 else 7)
                         })
 
-                        addView(TextView(this@MainActivity).apply {
-                            text = formatWait(item.waitMinutes)
-                            textSize = if (compact) 15f else 16f
-                            typeface = Typeface.DEFAULT_BOLD
-                            setTextColor(color(R.color.md_primary_container))
-                        }, LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        ).apply {
-                            topMargin = dp(2)
-                        })
+                        if (shouldShowRelativeTime()) {
+                            addView(TextView(this@MainActivity).apply {
+                                text = formatWait(item.waitMinutes)
+                                textSize = if (compact) 15f else 16f
+                                typeface = Typeface.DEFAULT_BOLD
+                                setTextColor(color(R.color.md_primary_container))
+                            }, LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply {
+                                topMargin = dp(2)
+                            })
+                        }
                     }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
                     addView(View(this@MainActivity), LinearLayout.LayoutParams(dp(if (compact) 96 else 122), dp(1)))
@@ -497,13 +499,15 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_primary))
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-            addView(TextView(this@MainActivity).apply {
-                text = formatWait(item.waitMinutes)
-                textSize = if (compact) 15f else 16f
-                gravity = Gravity.END
-                typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-                setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
-            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            if (shouldShowRelativeTime()) {
+                addView(TextView(this@MainActivity).apply {
+                    text = formatWait(item.waitMinutes)
+                    textSize = if (compact) 15f else 16f
+                    gravity = Gravity.END
+                    typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                    setTextColor(color(if (selected) R.color.md_primary else R.color.md_text_secondary))
+                }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }
 
             addView(TextView(this@MainActivity).apply {
                 text = "›"
@@ -728,6 +732,10 @@ class MainActivity : AppCompatActivity() {
                 radius = dp(if (isCompactLayout()) 16 else 17)
             )
         }
+    }
+
+    private fun shouldShowRelativeTime(): Boolean {
+        return selectedTimeMode == TimeMode.Now
     }
 
     private fun roundedBackground(
